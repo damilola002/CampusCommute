@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, AuthenticationForm, login
 from .models import CustomerUser
 
 def login_user(request):
@@ -19,3 +19,5 @@ def login_user(request):
             return render(request, 'login.html', {'error': 'Invalid credentials'})
             
     return render(request, 'login.html')
+    #bloom filter algotithim can be used for usernames and emails (anything unique), bit field 
+ 
