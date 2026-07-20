@@ -1,3 +1,21 @@
 from django.shortcuts import render
 
 # Create your views here.
+from django.shortcuts import redirect
+from django.contrib.auth import authenticate, login
+from .models import CustomerUser
+
+def login_user(request):
+    if request.method == "POST":
+        email_entered = request.POST['email']
+        password_entered = request.POST['password']
+        
+        user = authenticate(request, username=email_entered, password=password_entered)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
+            
+    return render(request, 'login.html')
