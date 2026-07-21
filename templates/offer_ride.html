@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Offer a Ride</title>
+
+<style>
+
+body {
+    font-family: Arial;
+    background-color: #ffffff;
+}
+
+
+.container {
+    width: 400px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+
+h1 {
+    text-align: center;
+}
+
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+}
+
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+
+button:hover {
+    opacity: .8;
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+<h1>
+Offer a Ride
+</h1>
+
+
+<form method = "POST">
+{% csrf_token %}
+
+
+<label>
+Pickup Location
+</label>
+
+<input 
+type="text"
+name ="pickup_location"
+placeholder="Example: UTA Library"
+>
+
+
+<label>
+Destination
+</label>
+
+<input 
+type="text"
+name = "destination"
+placeholder="Example: Dallas"
+>
+
+
+<label>
+Date
+</label>
+
+<input 
+type="date"
+name = "date"
+>
+
+
+<label>
+Time
+</label>
+
+<input 
+type="time"
+name = "time"
+>
+
+
+<label>
+Seats Available
+</label>
+
+<input 
+type="number"
+name= "seats_available"
+>
+
+
+<button>
+Offer Ride
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</body>
+
+</html>
