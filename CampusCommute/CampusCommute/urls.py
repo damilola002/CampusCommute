@@ -21,4 +21,5 @@ app_name = 'user'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', include('user.urls')),
+    path('googleaccount/', include('allauth.urls')),
 ]
