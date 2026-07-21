@@ -8,46 +8,98 @@
 <style>
 
 body {
-    font-family: Arial;
-    background-color: #ffffff;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+}
+
+
+.navbar {
+    background: #1d4ed8;
+    color: white;
+    padding: 20px 40px;
 }
 
 
 .container {
-    width: 400px;
+    width: 450px;
     margin: 50px auto;
     background: white;
-    padding: 30px;
-    border-radius: 10px;
+    padding: 35px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 
 h1 {
-    text-align: center;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+
+.subtitle {
+    text-align:center;
+    color:#666;
+    margin-bottom:30px;
+}
+
+
+label {
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
 }
 
 
 input {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0;
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    box-sizing:border-box;
+}
+
+
+.row {
+    display:flex;
+    gap:15px;
+}
+
+
+.row div {
+    width:50%;
 }
 
 
 button {
-    width: 100%;
-    padding: 12px;
-    background: black;
-    color: white;
-    border: none;
-    cursor: pointer;
+    width:100%;
+    margin-top:25px;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#1d4ed8;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
 }
 
 
 button:hover {
-    opacity: .8;
+    background:#163ea8;
 }
 
+
+.success-message {
+
+    background:#dcfce7;
+    color:#166534;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:20px;
+    text-align:center;
+
+}
 
 </style>
 
@@ -57,15 +109,46 @@ button:hover {
 <body>
 
 
+<div class="navbar">
+
+    <h2> CampusCommute🚗</h2>
+
+</div>
+
+
+
 <div class="container">
+
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <div class="success-message">
+            {{ message }}
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+
+
 
 <h1>
 Offer a Ride
 </h1>
 
 
-<form method = "POST">
+<p class="subtitle">
+Help another student get where they need to go.
+</p>
+
+
+
+<form method="POST">
+
 {% csrf_token %}
+
 
 
 <label>
@@ -74,9 +157,10 @@ Pickup Location
 
 <input 
 type="text"
-name ="pickup_location"
+name="pickup_location"
 placeholder="Example: UTA Library"
 >
+
 
 
 <label>
@@ -85,10 +169,16 @@ Destination
 
 <input 
 type="text"
-name = "destination"
+name="destination"
 placeholder="Example: Dallas"
 >
 
+
+
+<div class="row">
+
+
+<div>
 
 <label>
 Date
@@ -96,9 +186,13 @@ Date
 
 <input 
 type="date"
-name = "date"
->
+name="date">
 
+</div>
+
+
+
+<div>
 
 <label>
 Time
@@ -106,8 +200,13 @@ Time
 
 <input 
 type="time"
-name = "time"
->
+name="time">
+
+</div>
+
+
+</div>
+
 
 
 <label>
@@ -116,13 +215,16 @@ Seats Available
 
 <input 
 type="number"
-name= "seats_available"
+name="seats_available"
+placeholder="Number of seats"
 >
+
 
 
 <button>
 Offer Ride
 </button>
+
 
 
 </form>
