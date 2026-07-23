@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Find a Ride</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, Helvetica, sans-serif;
+            background:#f4f7fb;
+        }
+
+        .navbar{
+            background:#1d4ed8;
+            color:white;
+            padding:20px 40px;
+        }
+
+        .navbar h2{
+            margin:0;
+        }
+
+        .container{
+            width:900px;
+            margin:40px auto;
+        }
+
+        h1{
+            text-align:center;
+            color:#1d4ed8;
+            margin-bottom:10px;
+        }
+
+        .subtitle{
+            text-align:center;
+            color:#666;
+            margin-bottom:30px;
+        }
+
+        .search-box{
+            background:white;
+            padding:20px;
+            border-radius:15px;
+            box-shadow:0 5px 15px rgba(0,0,0,.08);
+            margin-bottom:30px;
+        }
+
+        .search-box input{
+            width:100%;
+            padding:14px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            font-size:16px;
+        }
+
+        .ride-card{
+
+            background:white;
+            border-radius:15px;
+            padding:25px;
+            margin-bottom:20px;
+            box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+        }
+
+        .route{
+
+            font-size:24px;
+            font-weight:bold;
+            color:#1d4ed8;
+            margin-bottom:15px;
+
+        }
+
+        .details{
+
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+            margin-bottom:20px;
+
+        }
+
+        .details p{
+            color:#555;
+        }
+
+        .request-btn{
+
+            background:#1d4ed8;
+            color:white;
+            border:none;
+            padding:12px 20px;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:15px;
+
+        }
+
+        .request-btn:hover{
+
+            background:#163ea8;
+
+        }
+
+        .empty{
+
+            text-align:center;
+            background:white;
+            padding:40px;
+            border-radius:15px;
+            box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+
+    <h2>🚗 CampusCommute</h2>
+
+</div>
+
+
+<div class="container">
+
+    <h1>Find a Ride</h1>
+
+    <p class="subtitle">
+        Browse rides offered by other students.
+    </p>
+
+    <div class="search-box">
+
+        <form method="GET">
+    
+            <input
+                type="text"
+                name="search"
+                placeholder="Search by destination or pickup location..."
+            >
+    
+            <button type="submit" class="request-btn">
+                Search
+            </button>
+    
+        </form>
+    
+    </div>
+
+    {% if rides %}
+
+        {% for ride in rides %}
+
+        <div class="ride-card">
+
+            <div class="route">
+
+                {{ ride.pickup_location }}
+                →
+                {{ ride.destination }}
+
+            </div>
+
+            <div class="details">
+
+                <p>📅 <strong>Date:</strong> {{ ride.date }}</p>
+
+                <p>🕒 <strong>Time:</strong> {{ ride.time }}</p>
+
+                <p>💺 <strong>Seats Available:</strong> {{ ride.seats_available }}</p>
+
+            </div>
+
+            <form method="POST">
+
+                {% csrf_token %}
+            
+                <input
+                    type="hidden"
+                    name="ride_id"
+                    value="{{ ride.id }}">
+            
+                <button class="request-btn">
+                    Request Ride
+                </button>
+            
+            </form>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+
+            <h2>No rides available.</h2>
+
+            <p>Check back later or ask someone to offer a ride!</p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
