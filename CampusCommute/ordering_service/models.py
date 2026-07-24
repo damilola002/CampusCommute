@@ -12,7 +12,7 @@ class Ordering(models.Model):
         ACCEPTED: "Accepted",
         CANCELLED: "Cancelled",
     }
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    Rider_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     #create for driver
     #class Status(models.)
     
