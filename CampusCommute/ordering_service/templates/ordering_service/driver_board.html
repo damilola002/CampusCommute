@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="margin: 0; font-size: 1.5rem;">Driver Dashboard</h2>
+    <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.875rem;">Pending requests near you</p>
+</div>
+
+<div class="board-container">
+    {% for item in nearby_orders %}
+    <div class="card" style="display: flex; gap: 1rem; align-items: stretch; border-left: 4px solid var(--primary-color);">
+        
+        <!-- Left Side: Order Details -->
+        <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <i class="fa-solid fa-circle-user" style="color: var(--text-muted);"></i>
+                {{ item.order.rider.full_name|default:item.order.rider.username }}
+            </div>
+            
+            <div style="font-size: 0.875rem; color: var(--text-muted); display: grid; grid-template-columns: 20px 1fr; gap: 0.5rem;">
+                <i class="fa-solid fa-location-dot" style="margin-top: 2px;"></i>
+                <span>{{ item.order.pickup_location }} &rarr; {{ item.order.dropoff_location }}</span>
+                
+                <i class="fa-regular fa-clock" style="margin-top: 2px;"></i>
+                <span>{{ item.order.approx_time|date:"h:i A (M d)" }}</span>
+                
+                <i class="fa-solid fa-car" style="margin-top: 2px;"></i>
+                <span>
+                    {% if item.distance != None %}
+                        {{ item.distance }} miles away
+                    {% else %}
+                        Distance unknown
+                    {% endif %}
+                </span>
+            </div>
+            
+            {% if item.order.description %}
+            <div style="margin-top: 0.5rem; font-size: 0.875rem; font-style: italic;">
+                "{{ item.order.description }}"
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Side: Action Buttons (matching user wireframe: ✅ and ❌) -->
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
+            <form method="POST" action="{% url 'accept_order' item.order.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color); border: 1px solid var(--success-color); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" title="Accept Ride" onmouseover="this.style.backgroundColor='var(--success-color)'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(16, 185, 129, 0.1)'; this.style.color='var(--success-color)';">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </form>
+            
+            <button type="button" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" title="Ignore" onmouseover="this.style.backgroundColor='var(--danger-color)'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(239, 68, 68, 0.1)'; this.style.color='var(--danger-color)';">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-route" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p>No pending ride requests near you.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Option B: Silent Geolocation Ping -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                // We use fetch to silently post coordinates to update_driver_location
+                let formData = new FormData();
+                formData.append('lat', position.coords.latitude);
+                formData.append('lng', position.coords.longitude);
+                // Need csrf token
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+                if(csrf) {
+                    fetch("{% url 'update_driver_location' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrf
+                        },
+                        body: formData
+                    });
+                }
+            });
+        }
+    });
+</script>
+<!-- Hidden CSRF token for the script above -->
+<form style="display:none;">{% csrf_token %}</form>
+{% endblock %}

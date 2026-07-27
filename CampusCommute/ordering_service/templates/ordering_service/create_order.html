@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="margin: 0; font-size: 1.5rem;">Request a Ride</h2>
+    <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.875rem;">Fill out the details below to broadcast your request.</p>
+</div>
+
+<div class="card">
+    <form method="POST" action="{% url 'create_order' %}">
+        {% csrf_token %}
+        
+        {{ form.pickup_lat }}
+        {{ form.pickup_lng }}
+
+        <div class="input-group">
+            <label for="{{ form.pickup_location.id_for_label }}">Pickup Location</label>
+            {{ form.pickup_location }}
+        </div>
+
+        <div class="input-group">
+            <label for="{{ form.dropoff_location.id_for_label }}">Dropoff Location</label>
+            {{ form.dropoff_location }}
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <div class="input-group" style="flex: 1;">
+                <label for="{{ form.approx_time.id_for_label }}">Approx Time</label>
+                {{ form.approx_time }}
+            </div>
+            
+            <div class="input-group" style="width: 100px;">
+                <label for="{{ form.num_passengers.id_for_label }}">Passengers</label>
+                {{ form.num_passengers }}
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 2rem;">
+            <label for="{{ form.description.id_for_label }}">Notes / Description</label>
+            {{ form.description }}
+        </div>
+
+        <button type="submit" class="btn">Broadcast Request</button>
+    </form>
+</div>
+
+<!-- Styling for Django Form Inputs to match our design -->
+<style>
+    .card input[type="text"], 
+    .card input[type="number"], 
+    .card input[type="datetime-local"], 
+    .card textarea {
+        width: 100%;
+        background-color: #0f172a;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease;
+        font-family: inherit;
+    }
+    
+    .card input:focus, .card textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+</style>
+
+<!-- Simulated Geolocation for testing (always sets coordinates to a fixed campus location) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('{{ form.pickup_lat.id_for_label }}').value = '40.7128';
+        document.getElementById('{{ form.pickup_lng.id_for_label }}').value = '-74.0060';
+    });
+</script>
+{% endblock %}

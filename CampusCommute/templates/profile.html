@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700;">My Profile</h2>
+</div>
+
+<div class="card">
+    <form method="POST" enctype="multipart/form-data" action="{% url 'user:profile' %}">
+        {% csrf_token %}
+        
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+            {% else %}
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                    <i class="fa-solid fa-user" style="font-size: 2rem; color: var(--text-muted);"></i>
+                </div>
+            {% endif %}
+            <div style="flex: 1;">
+                <h3 style="margin: 0 0 0.5rem 0;">{{ user.full_name }}</h3>
+                <span style="background: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">{{ user.role|title }}</span>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label>Update Profile Picture</label>
+            <input type="file" name="profile_picture" class="input-control" accept="image/*">
+        </div>
+
+        <div class="input-group">
+            <label>Short Bio</label>
+            <textarea name="bio" class="input-control" rows="3">{{ user.bio }}</textarea>
+        </div>
+
+        {% if user.is_driver %}
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <h3 style="margin: 0 0 1rem 0;">Vehicle Registration</h3>
+            
+            <div class="input-group">
+                <label>Vehicle Model</label>
+                <input type="text" name="vehicle_model" value="{{ user.vehicle_model }}" class="input-control" placeholder="e.g. Honda Civic">
+            </div>
+            
+            <div class="input-group">
+                <label>Vehicle Type</label>
+                <input type="text" name="vehicle_type" value="{{ user.vehicle_type }}" class="input-control" placeholder="e.g. Sedan, SUV">
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <div class="input-group" style="flex: 1;">
+                    <label>Year</label>
+                    <input type="number" name="vehicle_year" value="{{ user.vehicle_year }}" class="input-control" placeholder="2020">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>License Plate</label>
+                    <input type="text" name="license_plate" value="{{ user.license_plate }}" class="input-control" placeholder="ABC-1234">
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-md);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Average Rating</span>
+                    <span style="font-weight: 600;">⭐ {{ user.average_rating|floatformat:1 }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Total Passengers</span>
+                    <span style="font-weight: 600;">{{ user.total_passengers }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn" style="border-radius: 50px;">Save Profile</button>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <h3 style="margin: 0 0 1rem 0;">Preferences</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Dark Mode</span>
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+            <span class="slider round"></span>
+        </label>
+    </div>
+</div>
+
+<div style="margin-top: 1rem; margin-bottom: 2rem;">
+    <a href="{% url 'ride_history' %}" class="btn btn-outline" style="border-radius: 50px; margin-bottom: 1rem;">View Ride History</a>
+    
+    <form method="POST" action="{% url 'user:login' %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="button" onclick="window.location.href='/login/'" class="btn btn-danger" style="border-radius: 50px;">Log Out</button>
+    </form>
+</div>
+
+<style>
+/* Toggle Switch CSS */
+.switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--primary-color); }
+input:checked + .slider:before { transform: translateX(22px); }
+.slider.round { border-radius: 34px; }
+.slider.round:before { border-radius: 50%; }
+</style>
+
+<script>
+    function toggleDarkMode() {
+        const isChecked = document.getElementById('darkModeToggle').checked;
+        document.documentElement.classList.toggle('light-mode', !isChecked);
+        document.cookie = "theme=" + (isChecked ? "dark" : "light") + "; path=/; max-age=31536000";
+    }
+
+    // Initialize toggle state from cookie or body class
+    document.addEventListener('DOMContentLoaded', () => {
+        const isLight = document.documentElement.classList.contains('light-mode');
+        document.getElementById('darkModeToggle').checked = !isLight;
+    });
+</script>
+{% endblock %}

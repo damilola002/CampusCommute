@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
-
 class OrderingServiceConfig(AppConfig):
-    name = 'ordering_service'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "ordering_service"

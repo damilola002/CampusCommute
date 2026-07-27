@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block content %}
+<div class="auth-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; padding: 1rem 0;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.75rem; font-weight: 700;">Join CampusCommute</h2>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">Create your account to start riding or driving</p>
+    </div>
+
+    <div class="card" style="width: 100%; padding: 2rem;">
+        <form method="POST" action="{% url 'user:signup' %}">
+            {% csrf_token %}
+            
+            {% if error %}
+            <div style="color: var(--danger-color); margin-bottom: 1rem; font-size: 0.875rem; text-align: center;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="input-group" style="display: flex; gap: 1rem;">
+                <div style="flex: 1;">
+                    <input type="text" name="full_name" id="full_name" class="input-control" placeholder="Full Name" required>
+                </div>
+                <div style="flex: 1;">
+                    <input type="text" name="username" id="username" class="input-control" placeholder="Username" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <input type="email" name="email" id="email" class="input-control" placeholder="Email Address" required>
+            </div>
+            
+            <div class="input-group">
+                <input type="password" name="password" id="password" class="input-control" placeholder="Create a Password" required>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 2rem; text-align: center;">
+                <label style="margin-bottom: 1rem;">I want to sign up as a:</label>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: var(--surface-hover); padding: 0.75rem 1.5rem; border-radius: 50px; border: 1px solid var(--border-color);">
+                        <input type="radio" name="role" value="rider" checked>
+                        Rider
+                    </label>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: var(--surface-hover); padding: 0.75rem 1.5rem; border-radius: 50px; border: 1px solid var(--border-color);">
+                        <input type="radio" name="role" value="driver">
+                        Driver
+                    </label>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" style="border-radius: 50px;">Create Account</button>
+        </form>
+
+        <div style="display: flex; align-items: center; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.875rem;">
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
+            <span style="padding: 0 1rem;">OR</span>
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
+        </div>
+
+        <a href="{% provider_login_url 'google' %}" class="btn btn-outline" style="border-radius: 50px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <i class="fa-brands fa-google" style="color: #ea4335;"></i> Sign up with Google
+        </a>
+    </div>
+
+    <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.875rem;">
+        Already have an account? <a href="{% url 'user:login' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Sign in</a>
+    </p>
+
+</div>
+{% endblock %}

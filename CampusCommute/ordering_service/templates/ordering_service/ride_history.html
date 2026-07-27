@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+    <a href="{% url 'user:profile' %}" style="color: var(--text-main); text-decoration: none;">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700;">Ride History</h2>
+</div>
+
+<div class="rides-container">
+    {% for ride in rides %}
+    <div class="card" style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="font-weight: 600;">
+                {% if user.is_driver %}
+                    Passenger: {{ ride.rider.full_name }}
+                {% else %}
+                    Driver: {{ ride.driver.full_name|default:"Unassigned" }}
+                {% endif %}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ ride.created_at|date:"M d, Y" }}
+            </div>
+        </div>
+        
+        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            <div><i class="fa-solid fa-location-arrow"></i> From: {{ ride.pickup_location }}</div>
+            <div><i class="fa-solid fa-location-dot"></i> To: {{ ride.dropoff_location }}</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                {{ ride.status|upper }}
+            </span>
+            
+            {% if not user.is_driver and ride.status == 'accepted' %}
+                <!-- Riders can review completed/accepted rides -->
+                {% if not hasattr|default:False %}
+                    <!-- We use a simple button to reveal a rating form -->
+                    <button type="button" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; width: auto; border-radius: 20px;" onclick="document.getElementById('review-form-{{ ride.id }}').style.display = 'block'; this.style.display = 'none';">
+                        Leave Review
+                    </button>
+                {% else %}
+                    <span style="color: var(--success-color); font-size: 0.75rem;">
+                        <i class="fa-solid fa-check-circle"></i> Reviewed
+                    </span>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <!-- Review Form -->
+        {% if not user.is_driver and ride.status == 'accepted' %}
+        <div id="review-form-{{ ride.id }}" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <form method="POST" action="{% url 'ride_history' %}">
+                {% csrf_token %}
+                <input type="hidden" name="ride_id" value="{{ ride.id }}">
+                <div class="input-group">
+                    <label>Rating (1-5)</label>
+                    <select name="rating" class="input-control" required style="background: var(--bg-color);">
+                        <option value="5">⭐⭐⭐⭐⭐ (5) Excellent</option>
+                        <option value="4">⭐⭐⭐⭐ (4) Good</option>
+                        <option value="3">⭐⭐⭐ (3) Okay</option>
+                        <option value="2">⭐⭐ (2) Poor</option>
+                        <option value="1">⭐ (1) Terrible</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Comments</label>
+                    <textarea name="comment" class="input-control" rows="2" placeholder="Great driver!"></textarea>
+                </div>
+                <button type="submit" class="btn" style="border-radius: 50px;">Submit Review</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-clock-rotate-left" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p>No past rides found.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

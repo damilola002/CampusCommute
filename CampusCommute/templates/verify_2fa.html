@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.75rem; font-weight: 700;">Two-Factor Verification</h2>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">Enter the 4-digit verification code sent to your email to complete login</p>
+    </div>
+
+    <div class="card" style="width: 100%; padding: 2rem; box-sizing: border-box;">
+        <form method="POST" action="{% url 'user:verify_2fa' %}">
+            {% csrf_token %}
+            
+            {% if error %}
+            <div style="color: var(--danger-color); margin-bottom: 1rem; font-size: 0.875rem; text-align: center;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+            </div>
+            {% endif %}
+            
+            <div class="input-group" style="margin-bottom: 2rem;">
+                <label for="code">4-Digit Code</label>
+                <input type="text" name="code" id="code" class="input-control" placeholder="e.g. 1234" maxlength="4" required style="letter-spacing: 0.5rem; text-align: center; font-size: 1.25rem; font-weight: 700;">
+            </div>
+            
+            <button type="submit" class="btn" style="border-radius: 50px;">Verify & Log In</button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

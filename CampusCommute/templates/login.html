@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block content %}
+<div class="auth-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.75rem; font-weight: 700;">Welcome Back</h2>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">Sign in to continue to CampusCommute</p>
+    </div>
+
+    <div class="card" style="width: 100%; padding: 2rem;">
+        <form method="POST" action="{% url 'user:login' %}">
+            {% csrf_token %}
+            
+            {% if error %}
+            <div style="color: var(--danger-color); margin-bottom: 1rem; font-size: 0.875rem; text-align: center;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+            </div>
+            {% endif %}
+            
+            <div class="input-group">
+                <input type="email" name="email" id="email" class="input-control" placeholder="Email Address" required>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 2rem;">
+                <input type="password" name="password" id="password" class="input-control" placeholder="Password" required>
+                <div style="text-align: right; margin-top: 0.5rem;">
+                    <a href="{% url 'user:forgot_password' %}" style="font-size: 0.875rem; color: var(--primary-color); text-decoration: none;">Forgot password?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" style="border-radius: 50px;">Sign In</button>
+        </form>
+
+        <div style="display: flex; align-items: center; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.875rem;">
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
+            <span style="padding: 0 1rem;">OR</span>
+            <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color);">
+        </div>
+
+        <a href="{% provider_login_url 'google' %}" class="btn btn-outline" style="border-radius: 50px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <i class="fa-brands fa-google" style="color: #ea4335;"></i> Continue with Google
+        </a>
+    </div>
+
+    <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.875rem;">
+        Don't have an account? <a href="{% url 'user:signup' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Sign up</a>
+    </p>
+
+</div>
+{% endblock %}
