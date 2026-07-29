@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>CampusCommute Login</title>
+
+    <style>
+
+        body{
+            margin:0;
+            font-family:Arial, Helvetica, sans-serif;
+            background:#f4f7fb;
+        }
+
+        .navbar{
+            background:#1d4ed8;
+            color:white;
+            padding:20px 40px;
+        }
+
+        .container{
+            width:460px;
+            margin:50px auto;
+            background:white;
+            padding:40px;
+            border-radius:18px;
+            box-shadow:0 10px 30px rgba(0,0,0,.1);
+        }
+
+        .logo{
+            text-align:center;
+            font-size:55px;
+        }
+
+        .app-name{
+            text-align:center;
+            font-size:28px;
+            font-weight:bold;
+            color:#1d4ed8;
+            margin-top:5px;
+        }
+
+        h1{
+            text-align:center;
+            margin-top:20px;
+            margin-bottom:10px;
+        }
+
+        .subtitle{
+            text-align:center;
+            color:#666;
+            margin-bottom:30px;
+        }
+
+        label{
+            display:block;
+            margin-top:18px;
+            margin-bottom:8px;
+            font-weight:bold;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            border-radius:8px;
+            border:1px solid #ddd;
+            box-sizing:border-box;
+            font-size:15px;
+        }
+
+        .role-container{
+
+            display:flex;
+            justify-content:center;
+            gap:40px;
+            margin-top:10px;
+            margin-bottom:25px;
+
+        }
+
+        .role-option{
+
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:16px;
+
+        }
+
+        input[type="radio"]{
+
+            width:auto;
+
+        }
+
+        button{
+
+            width:100%;
+            padding:14px;
+            margin-top:20px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            font-size:16px;
+
+        }
+
+        .login-btn{
+
+            background:#1d4ed8;
+            color:white;
+
+        }
+
+        .login-btn:hover{
+
+            background:#163ea8;
+
+        }
+
+        .divider{
+
+            display:flex;
+            align-items:center;
+            text-align:center;
+            margin:30px 0;
+
+        }
+
+        .divider::before,
+        .divider::after{
+
+            content:"";
+            flex:1;
+            border-bottom:1px solid #ddd;
+
+        }
+
+        .divider span{
+
+            padding:0 15px;
+            color:#888;
+
+        }
+
+        .google-btn{
+
+            background:white;
+            color:#444;
+            border:1px solid #ccc;
+
+        }
+
+        .google-btn:hover{
+
+            background:#f0f0f0;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+
+    <h2>CampusCommute🚗</h2>
+
+</div>
+
+<div class="container">
+
+    <div class="logo">
+        🚗
+    </div>
+
+    <div class="app-name">
+        CampusCommute
+    </div>
+
+    <h1>Welcome Back</h1>
+
+    <p class="subtitle">
+        Sign in to find or offer rides around campus.
+    </p>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <label>I am a:</label>
+
+        <div class="role-container">
+
+            <label class="role-option">
+                <input
+                    type="radio"
+                    name="role"
+                    value="driver">
+                Driver
+            </label>
+
+            <label class="role-option">
+                <input
+                    type="radio"
+                    name="role"
+                    value="student">
+                Student
+            </label>
+
+        </div>
+
+        <label>Full Name</label>
+
+        <input
+            type="text"
+            name="full_name"
+            placeholder="Enter your full name">
+
+        <label>Username</label>
+
+        <input
+            type="text"
+            name="username"
+            placeholder="Enter your username">
+
+        <label>Password</label>
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Enter your password">
+
+        <button class="login-btn">
+            Log In
+        </button>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <button
+            type="button"
+            class="google-btn">
+
+            Continue with Google
+
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+
+</html>

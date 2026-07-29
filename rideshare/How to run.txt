@@ -1,0 +1,16 @@
+source /workspaces/CampusCommute/.venv/bin/activate   for Linux/MacOS cosespace. Flask is installed inside this also.
+
+Indext.html is using leaflet 
+
+Running it.
+from the rideshare folder:
+python app.py   <-- type this in console
+
+you should see:
+Running on https://127.0.0.1:5000 (or something similiar)
+open that link in the codespace browser
+
+browser should request the page, Flask will send index.html.
+Html loads leaflet and map.js
+
+Javascript will create the map and updates every 2 seconds.
