@@ -1,21 +1,37 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
     <div>
-        <h2 style="margin: 0; font-size: 1.5rem;">Community Board</h2>
-        <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.875rem;">Recent ride requests</p>
+        <h2 style="margin: 0; font-size: 1.5rem;">Rides Board</h2>
+        <p style="color: var(--text-muted); margin-top: 0.25rem; font-size: 0.875rem;">Browse requests and available seats</p>
     </div>
-    <a href="{% url 'create_order' %}" class="btn" style="width: auto; padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.875rem;">
-        <i class="fa-solid fa-plus"></i> Request Ride
-    </a>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="{% url 'create_order' %}" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.875rem;">
+            <i class="fa-solid fa-plus"></i> Request
+        </a>
+        {% if user.role == 'driver' %}
+        <a href="{% url 'offer_ride' %}" class="btn" style="width: auto; padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.875rem;">
+            <i class="fa-solid fa-car"></i> Offer Ride
+        </a>
+        {% endif %}
+    </div>
 </div>
 
-<div class="board-container">
-    {% for order in orders %}
+<!-- Tabs -->
+<div style="display: flex; gap: 0; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem;">
+    <button id="tab-requests" onclick="switchTab('requests')" style="flex: 1; padding: 0.75rem; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--text-main); font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: -2px;">
+        <i class="fa-solid fa-hand-paper"></i> Ride Requests
+    </button>
+    <button id="tab-offers" onclick="switchTab('offers')" style="flex: 1; padding: 0.75rem; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: -2px;">
+        <i class="fa-solid fa-car-side"></i> Available Rides
+    </button>
+</div>
+
+<!-- RIDE REQUESTS TAB -->
+<div id="panel-requests" class="board-container">
+    {% for order in request_orders %}
     <div class="card" style="position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0.5rem;">
-        
-        <!-- Status indicator line -->
         {% if order.status == 'pending' %}
             <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background-color: var(--primary-color);"></div>
         {% elif order.status == 'accepted' %}
@@ -27,35 +43,45 @@
                 <i class="fa-solid fa-circle-user" style="color: var(--text-muted);"></i>
                 {{ order.rider.full_name|default:order.rider.username }}
             </div>
-            
             {% if order.status == 'pending' %}
-                <span style="background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">PENDING</span>
+                <span style="background-color: rgba(59,130,246,0.1); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">PENDING</span>
             {% elif order.status == 'accepted' %}
-                <span style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">ACCEPTED</span>
+                <span style="background-color: rgba(16,185,129,0.1); color: var(--success-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">ACCEPTED</span>
             {% endif %}
         </div>
 
         <div style="font-size: 0.875rem; color: var(--text-muted); display: grid; grid-template-columns: 20px 1fr; gap: 0.5rem; margin-top: 0.5rem;">
             <i class="fa-solid fa-location-dot" style="margin-top: 2px;"></i>
             <span>{{ order.pickup_location }} &rarr; {{ order.dropoff_location }}</span>
-            
             <i class="fa-regular fa-clock" style="margin-top: 2px;"></i>
             <span>{{ order.approx_time|date:"M d, Y, h:i A" }}</span>
-            
             <i class="fa-solid fa-user-group" style="margin-top: 2px;"></i>
             <span>{{ order.num_passengers }} passenger{{ order.num_passengers|pluralize }}</span>
         </div>
 
         {% if order.description %}
-        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 0.875rem;">
-            "{{ order.description }}"
-        </div>
+        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 0.875rem;">"{{ order.description }}"</div>
         {% endif %}
-        
+
         {% if order.status == 'accepted' %}
         <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--success-color); display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-check-circle"></i> Driver assigned: {{ order.driver.full_name|default:order.driver.username }}
+            <i class="fa-solid fa-check-circle"></i> Driver: {{ order.driver.full_name|default:order.driver.username }}
         </div>
+        {% if user == order.rider or user == order.driver %}
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'chat_room' order.id %}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; display: inline-block; text-decoration: none; color: white;">
+                <i class="fa-solid fa-comments"></i> Chat with {% if user == order.rider %}Driver{% else %}Rider{% endif %}
+            </a>
+            {% if user == order.driver %}
+            <form method="POST" action="{% url 'end_ride' order.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to end this ride? The chat room will be locked.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; color: white;">
+                    <i class="fa-solid fa-flag-checkered"></i> End Ride
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
         {% elif order.status == 'pending' and user.role == 'driver' %}
         <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
             <form method="POST" action="{% url 'accept_order' order.id %}" style="margin: 0;">
@@ -66,13 +92,187 @@
             </form>
         </div>
         {% endif %}
-        
     </div>
     {% empty %}
     <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
         <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p>No ride requests yet. Be the first!</p>
+        <p>No ride requests yet.</p>
     </div>
     {% endfor %}
 </div>
+
+<!-- OFFERED RIDES TAB -->
+<div id="panel-offers" class="board-container" style="display: none;">
+    {% for order in offer_orders %}
+    <div class="card offer-card" id="offer-card-{{ order.id }}" style="display: flex; flex-direction: column; gap: 0.75rem; border-left: 4px solid var(--success-color);">
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-car" style="color: var(--success-color);"></i>
+                {{ order.driver.full_name|default:order.driver.username }}
+                <span style="background: rgba(16,185,129,0.1); color: var(--success-color); font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 999px; font-weight: 600;">DRIVER</span>
+            </div>
+            <span style="background: rgba(16,185,129,0.1); color: var(--success-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                <span id="avail-{{ order.id }}">{{ order.available_seats }}</span> / {{ order.offered_seats }} seats free
+            </span>
+        </div>
+
+        <div style="font-size: 0.875rem; color: var(--text-muted); display: grid; grid-template-columns: 20px 1fr; gap: 0.4rem;">
+            <i class="fa-solid fa-location-dot" style="margin-top: 2px;"></i>
+            <span>{{ order.pickup_location }} &rarr; {{ order.dropoff_location }}</span>
+            <i class="fa-regular fa-clock" style="margin-top: 2px;"></i>
+            <span>{{ order.approx_time|date:"M d, Y, h:i A" }}</span>
+        </div>
+
+        {% if order.description %}
+        <div style="font-size: 0.875rem; font-style: italic; color: var(--text-muted);">"{{ order.description }}"</div>
+        {% endif %}
+
+        <!-- Seat Chair Picker -->
+        <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Seat availability</div>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="seats-{{ order.id }}">
+                {% for i in order.seat_range %}
+                    {% if i <= order.claimed_seats %}
+                    <span class="seat-icon seat-taken" title="Taken" style="font-size: 1.4rem; color: #ef4444;" data-seat="{{ i }}">🪑</span>
+                    {% else %}
+                    <span class="seat-icon seat-free" title="Available" style="font-size: 1.4rem; color: #10b981;" data-seat="{{ i }}">🪑</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tag Along Controls (only for non-drivers / not the ride's own driver) -->
+        {% if user != order.driver and user.role != 'driver' %}
+        <div id="tag-controls-{{ order.id }}" style="padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
+            {% if order.available_seats > 0 %}
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label style="font-size: 0.875rem; font-weight: 600; white-space: nowrap;">Seats for me:</label>
+                <select id="seats-select-{{ order.id }}" class="input-control" style="width: auto; padding: 0.4rem 0.6rem; font-size: 0.875rem;">
+                    {% for i in order.seat_range_available %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="tagAlong({{ order.id }})" class="btn btn-success" style="width: auto; padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.875rem; color: white; flex-shrink: 0;">
+                    <i class="fa-solid fa-person-walking"></i> Tag Along
+                </button>
+            </div>
+            <div id="tag-msg-{{ order.id }}" style="font-size: 0.8rem; margin-top: 0.4rem; display: none;"></div>
+            {% else %}
+            <div style="color: #ef4444; font-size: 0.875rem; font-weight: 600;"><i class="fa-solid fa-ban"></i> Fully booked</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if user.is_authenticated and user == order.driver or user.is_authenticated and order.user_has_claimed %}
+        <div style="padding-top: 0.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-start; margin-top: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'chat_room' order.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; display: inline-block; color: white; text-decoration: none;">
+                <i class="fa-solid fa-comments"></i> Group Chat
+            </a>
+            {% if user == order.driver %}
+            <form method="POST" action="{% url 'end_ride' order.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to end this ride? The chat room will be locked.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; color: white;">
+                    <i class="fa-solid fa-flag-checkered"></i> End Ride
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-car-side" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p>No rides offered yet. {% if user.role == 'driver' %}<a href="{% url 'offer_ride' %}" style="color: var(--primary-color);">Post one now!</a>{% endif %}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+var CSRF = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+if (!CSRF) {
+    // Fallback: get from cookie
+    CSRF = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+}
+
+function switchTab(tab) {
+    var isRequests = tab === 'requests';
+    document.getElementById('panel-requests').style.display = isRequests ? 'block' : 'none';
+    document.getElementById('panel-offers').style.display = isRequests ? 'none' : 'block';
+    document.getElementById('tab-requests').style.borderBottomColor = isRequests ? 'var(--primary-color)' : 'transparent';
+    document.getElementById('tab-requests').style.color = isRequests ? 'var(--text-main)' : 'var(--text-muted)';
+    document.getElementById('tab-offers').style.borderBottomColor = isRequests ? 'transparent' : 'var(--primary-color)';
+    document.getElementById('tab-offers').style.color = isRequests ? 'var(--text-muted)' : 'var(--text-main)';
+}
+
+async function tagAlong(orderId) {
+    var select = document.getElementById('seats-select-' + orderId);
+    var seats = select ? parseInt(select.value) : 1;
+    var msgEl = document.getElementById('tag-msg-' + orderId);
+
+    var formData = new FormData();
+    formData.append('csrfmiddlewaretoken', CSRF);
+    formData.append('seats', seats);
+
+    try {
+        var res = await fetch('/order/tag-along/' + orderId + '/', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData,
+        });
+        var data = await res.json();
+
+        if (data.status === 'ok') {
+            // Update available seats display
+            var availEl = document.getElementById('avail-' + orderId);
+            if (availEl) availEl.textContent = data.available_seats;
+
+            // Update seat icons
+            var seatsContainer = document.getElementById('seats-' + orderId);
+            if (seatsContainer) {
+                var icons = seatsContainer.querySelectorAll('.seat-icon');
+                icons.forEach(function(icon, idx) {
+                    var seatNum = idx + 1;
+                    if (seatNum <= data.claimed_seats) {
+                        icon.style.color = '#ef4444';
+                        icon.title = 'Taken';
+                    } else {
+                        icon.style.color = '#10b981';
+                        icon.title = 'Available';
+                    }
+                });
+            }
+
+            // Update the dropdown to reflect remaining seats
+            if (select) {
+                select.innerHTML = '';
+                for (var i = 1; i <= data.available_seats; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = i; opt.textContent = i;
+                    select.appendChild(opt);
+                }
+                if (data.available_seats === 0) {
+                    document.getElementById('tag-controls-' + orderId).innerHTML =
+                        '<div style="color:#ef4444;font-size:0.875rem;font-weight:600;"><i class="fa-solid fa-ban"></i> Fully booked</div>';
+                }
+            }
+
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = 'var(--success-color)';
+                msgEl.textContent = '\u2713 You\'ve claimed ' + seats + ' seat(s)! The driver has been notified.';
+            }
+        } else {
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = '#ef4444';
+                msgEl.textContent = data.message || 'Something went wrong.';
+            }
+        }
+    } catch(err) {
+        console.error('Tag along failed', err);
+    }
+}
+</script>
 {% endblock %}

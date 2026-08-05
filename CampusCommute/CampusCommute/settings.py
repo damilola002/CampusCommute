@@ -67,6 +67,8 @@ SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_ADAPTER = 'user.adapters.EduEmailOnlyAdapter'
+SOCIALACCOUNT_ADAPTER = 'user.adapters.EduSocialAccountAdapter'
 
 ROOT_URLCONF = 'CampusCommute.urls'
 

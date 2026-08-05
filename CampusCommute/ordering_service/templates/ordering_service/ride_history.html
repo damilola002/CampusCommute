@@ -31,9 +31,16 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
-                {{ ride.status|upper }}
-            </span>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                    {{ ride.status|upper }}
+                </span>
+                {% if ride.status == 'accepted' %}
+                <a href="{% url 'chat_room' ride.id %}" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; width: auto; border-radius: 20px; text-decoration: none; color: white;">
+                    <i class="fa-solid fa-comments"></i> Chat
+                </a>
+                {% endif %}
+            </div>
             
             {% if not user.is_driver and ride.status == 'accepted' %}
                 <!-- Riders can review completed/accepted rides -->

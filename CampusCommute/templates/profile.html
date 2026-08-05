@@ -92,9 +92,9 @@
 <div style="margin-top: 1rem; margin-bottom: 2rem;">
     <a href="{% url 'ride_history' %}" class="btn btn-outline" style="border-radius: 50px; margin-bottom: 1rem;">View Ride History</a>
     
-    <form method="POST" action="{% url 'user:login' %}" style="margin: 0;">
+    <form method="POST" action="{% url 'user:logout' %}" style="margin: 0;">
         {% csrf_token %}
-        <button type="button" onclick="window.location.href='/login/'" class="btn btn-danger" style="border-radius: 50px;">Log Out</button>
+        <button type="submit" class="btn btn-danger" style="border-radius: 50px;">Log Out</button>
     </form>
 </div>
 

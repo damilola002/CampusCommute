@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 160px);
+        max-height: 700px;
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(30, 41, 59, 0.5);
+    }
+
+    .participants-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.25rem;
+    }
+
+    .participant-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+    }
+
+    .participant-badge img {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .messages-area {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: rgba(15, 23, 42, 0.3);
+    }
+
+    .message-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        max-width: 80%;
+    }
+
+    .message-wrapper.self {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .message-wrapper.other {
+        align-self: flex-start;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .message-avatar-placeholder {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--surface-hover);
+        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .message-bubble {
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.95rem;
+        line-height: 1.4;
+        position: relative;
+        word-break: break-word;
+    }
+
+    .message-wrapper.self .message-bubble {
+        background-color: var(--primary-color);
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+
+    .message-wrapper.other .message-bubble {
+        background-color: var(--surface-hover);
+        color: var(--text-main);
+        border-bottom-left-radius: 2px;
+    }
+
+    .message-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .message-wrapper.self .message-info {
+        justify-content: flex-end;
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        background: rgba(30, 41, 59, 0.5);
+    }
+
+    .chat-input-form {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .chat-input {
+        flex: 1;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 0.75rem 1rem;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .chat-input:focus {
+        border-color: var(--primary-color);
+    }
+
+    .chat-send-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        flex-shrink: 0;
+    }
+
+    .chat-send-btn:hover {
+        background: var(--primary-hover);
+    }
+
+    .chat-send-btn:active {
+        transform: scale(0.95);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+    <a href="{% url 'community_board' %}" style="color: var(--text-main); text-decoration: none;">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <div>
+        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">
+            {% if is_group %}Group Ride Chat{% else %}Ride Chat{% endif %}
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+            {{ ride.pickup_location }} &rarr; {{ ride.dropoff_location }}
+        </span>
+    </div>
+</div>
+
+<div class="chat-container">
+    <!-- Header: Participants list -->
+    <div class="chat-header">
+        <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Participants</div>
+            <div class="participants-list">
+                {% for p in participants %}
+                    <div class="participant-badge" title="{{ p.full_name|default:p.username }} ({{ p.role|title }})">
+                        {% if p.profile_picture %}
+                            <img src="{{ p.profile_picture.url }}" alt="{{ p.username }}">
+                        {% else %}
+                            <i class="fa-solid fa-circle-user" style="color: var(--text-muted); font-size: 0.8rem;"></i>
+                        {% endif %}
+                        <span>{{ p.full_name|default:p.username }}</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); font-style: italic;">({{ p.role|title }})</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages List Area -->
+    <div class="messages-area" id="messages-area">
+        <!-- Messages will load here dynamically via JS -->
+    </div>
+
+    <!-- Message Input Box -->
+    <div class="chat-input-area">
+        {% if is_completed %}
+        <div style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); text-align: center; border: 1px solid rgba(239, 68, 68, 0.2); font-weight: 600; font-size: 0.9rem;">
+            <i class="fa-solid fa-lock"></i> This ride has ended. The chat room is now closed.
+        </div>
+        {% else %}
+        <form class="chat-input-form" id="chat-form" onsubmit="sendMessage(event)">
+            {% csrf_token %}
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type an encrypted message..." autocomplete="off" required>
+            <button type="submit" class="chat-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const currentUserId = parseInt("{{ user.id }}");
+    const messagesArea = document.getElementById('messages-area');
+    const chatInput = document.getElementById('chat-input');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let lastMessageCount = 0;
+
+    // Fetch and render messages
+    async function loadMessages(forceScroll = false) {
+        try {
+            const res = await fetch("{% url 'get_messages_api' ride.id %}");
+            const data = await res.json();
+            if (data.messages) {
+                // If message count changes, render
+                if (data.messages.length !== lastMessageCount || forceScroll) {
+                    renderMessages(data.messages);
+                    lastMessageCount = data.messages.length;
+                    scrollToBottom();
+                }
+            }
+        } catch (err) {
+            console.error("Failed to load messages", err);
+        }
+    }
+
+    function renderMessages(messages) {
+        messagesArea.innerHTML = '';
+        messages.forEach(msg => {
+            const isSelf = (msg.sender_id === currentUserId);
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${isSelf ? 'self' : 'other'}`;
+            
+            // Avatar
+            let avatarHtml = '';
+            if (msg.profile_picture) {
+                avatarHtml = `<img src="${msg.profile_picture}" class="message-avatar" alt="${msg.sender_name}">`;
+            } else {
+                avatarHtml = `
+                    <div class="message-avatar-placeholder">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                `;
+            }
+            
+            // Bubble and Meta
+            const bubbleWrapper = document.createElement('div');
+            bubbleWrapper.style.display = 'flex';
+            bubbleWrapper.style.flexDirection = 'column';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = msg.content;
+            
+            const info = document.createElement('div');
+            info.className = 'message-info';
+            if (isSelf) {
+                info.innerHTML = `<span>${msg.created_at}</span> &bull; <span>You</span>`;
+            } else {
+                info.innerHTML = `<span><b>${msg.sender_name}</b> (${msg.sender_role})</span> &bull; <span>${msg.created_at}</span>`;
+            }
+            
+            bubbleWrapper.appendChild(bubble);
+            bubbleWrapper.appendChild(info);
+            
+            wrapper.appendChild(bubbleWrapper);
+            // Show avatar next to bubble
+            const avatarContainer = document.createElement('div');
+            avatarContainer.innerHTML = avatarHtml;
+            wrapper.insertBefore(avatarContainer.firstElementChild, isSelf ? null : bubbleWrapper);
+            
+            messagesArea.appendChild(wrapper);
+        });
+    }
+
+    function scrollToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    // Send a message
+    async function sendMessage(event) {
+        event.preventDefault();
+        const isCompleted = {% if is_completed %}true{% else %}false{% endif %};
+        if (isCompleted || !chatInput) return;
+
+        const content = chatInput.value.trim();
+        if (!content) return;
+
+        chatInput.value = '';
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        formData.append('content', content);
+
+        try {
+            const res = await fetch("{% url 'send_message_api' ride.id %}", {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                loadMessages(true);
+            }
+        } catch (err) {
+            console.error("Failed to send message", err);
+        }
+    }
+
+    // Initial load and periodic polling
+    document.addEventListener('DOMContentLoaded', () => {
+        const isCompleted = {% if is_completed %}true{% else %}false{% endif %};
+        loadMessages(true);
+        if (!isCompleted) {
+            setInterval(() => loadMessages(false), 3000);
+        }
+    });
+</script>
+{% endblock %}

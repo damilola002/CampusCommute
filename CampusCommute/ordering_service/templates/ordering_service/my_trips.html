@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700;">My Active Trips</h2>
+    <p style="color: var(--text-muted); margin-top: 0.25rem; font-size: 0.875rem;">Manage your ongoing and pending commutes.</p>
+</div>
+
+<div class="trips-container">
+    {% for ride in active_rides %}
+    <div class="card" style="position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0.75rem; border-left: 4px solid var(--primary-color);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <span style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                    {{ ride.ride_type|upper }}
+                </span>
+                <span style="background: rgba(16, 185, 129, 0.1); color: var(--success-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-left: 0.25rem;">
+                    {{ ride.status|upper }}
+                </span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ ride.approx_time|date:"M d, h:i A" }}
+            </span>
+        </div>
+
+        <div style="font-size: 0.875rem; color: var(--text-muted); display: grid; grid-template-columns: 20px 1fr; gap: 0.4rem; margin-top: 0.25rem;">
+            <i class="fa-solid fa-location-dot" style="margin-top: 2px;"></i>
+            <span><b>From:</b> {{ ride.pickup_location }}</span>
+            <i class="fa-solid fa-flag" style="margin-top: 2px;"></i>
+            <span><b>To:</b> {{ ride.dropoff_location }}</span>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); gap: 0.5rem;">
+            <div style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-user-circle" style="color: var(--text-muted);"></i>
+                <span>
+                    {% if ride.ride_type == 'request' %}
+                        {% if user == ride.rider %}
+                            Driver: <b>{{ ride.driver.full_name|default:ride.driver.username|default:"Unassigned" }}</b>
+                        {% else %}
+                            Rider: <b>{{ ride.rider.full_name|default:ride.rider.username }}</b>
+                        {% endif %}
+                    {% else %}
+                        Driver: <b>{{ ride.driver.full_name|default:ride.driver.username }}</b>
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'chat_room' ride.id %}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; text-decoration: none; color: white;">
+                    <i class="fa-solid fa-comments"></i> Chat
+                </a>
+                
+                {% if user == ride.driver %}
+                <form method="POST" action="{% url 'end_ride' ride.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to end this ride? The chat room will be locked.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; border-radius: 20px; color: white;">
+                        <i class="fa-solid fa-flag-checkered"></i> End Ride
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-route" style="font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p>No active or pending trips found.</p>
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'community_board' %}" class="btn btn-outline" style="width: auto; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.875rem;">
+                Browse Ride Board
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

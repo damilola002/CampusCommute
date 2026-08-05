@@ -104,9 +104,10 @@ def forgot_password(request):
                 [email],
                 fail_silently=False,
             )
-            return render(request, 'reset_password.html', {'email': email})
         except CustomerUser.DoesNotExist:
-            return render(request, 'forgot_password.html', {'error': 'No account associated with this email.'})
+            # Silently do nothing if the user does not exist (prevents enumeration)
+            pass
+        return render(request, 'reset_password.html', {'email': email})
 
     return render(request, 'forgot_password.html')
 
@@ -157,6 +158,9 @@ def register_user(request):
         full_name_entered = request.POST.get('full_name', '')
         role_entered     = request.POST.get('role', 'rider')
 
+        if not email_entered.lower().endswith('.edu'):
+            return render(request, 'signup.html', {'error': 'Only emails ending in .edu are allowed.'})
+
         if role_entered not in ('rider', 'driver'):
             role_entered = 'rider'
 
@@ -196,3 +200,11 @@ def home_redirect(request):
     if request.user.is_authenticated:
         return redirect('community_board')
     return redirect('user:login')
+
+from django.contrib.auth import logout as django_logout
+
+def logout_user(request):
+    django_logout(request)
+    if 'pre_2fa_user_id' in request.session:
+        del request.session['pre_2fa_user_id']
+    return redirect('landing')

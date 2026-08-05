@@ -17,14 +17,13 @@
 
 {% block content %}
 <div style="margin-bottom: 2rem;">
-    <h2 style="margin: 0; font-size: 1.5rem;">Request a Ride</h2>
-    <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.875rem;">Select your pickup point on the map and fill out the details below.</p>
+    <h2 style="margin: 0; font-size: 1.5rem;">Offer a Ride</h2>
+    <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.875rem;">Post your available seats and riders will tag along.</p>
 </div>
 
 <div class="card">
-    <form method="POST" action="{% url 'create_order' %}">
+    <form method="POST" action="{% url 'offer_ride' %}">
         {% csrf_token %}
-        
         {{ form.pickup_lat }}
         {{ form.pickup_lng }}
 
@@ -45,30 +44,28 @@
 
         <div style="display: flex; gap: 1rem;">
             <div class="input-group" style="flex: 1;">
-                <label for="{{ form.approx_time.id_for_label }}">Approx Time</label>
+                <label for="{{ form.approx_time.id_for_label }}">Departure Time</label>
                 {{ form.approx_time }}
             </div>
-            
-            <div class="input-group" style="width: 100px;">
-                <label for="{{ form.num_passengers.id_for_label }}">Passengers</label>
-                {{ form.num_passengers }}
+            <div class="input-group" style="width: 110px;">
+                <label for="{{ form.offered_seats.id_for_label }}">Seats Available</label>
+                {{ form.offered_seats }}
             </div>
         </div>
 
         <div class="input-group" style="margin-bottom: 2rem;">
-            <label for="{{ form.description.id_for_label }}">Notes / Description</label>
+            <label for="{{ form.description.id_for_label }}">Notes for Riders</label>
             {{ form.description }}
         </div>
 
-        <button type="submit" class="btn">Broadcast Request</button>
+        <button type="submit" class="btn">Post Ride Offer</button>
     </form>
 </div>
 
-<!-- Styling for Django Form Inputs to match our design -->
 <style>
-    .card input[type="text"], 
-    .card input[type="number"], 
-    .card input[type="datetime-local"], 
+    .card input[type="text"],
+    .card input[type="number"],
+    .card input[type="datetime-local"],
     .card textarea {
         width: 100%;
         background-color: #0f172a;
@@ -81,7 +78,6 @@
         transition: border-color 0.2s ease;
         font-family: inherit;
     }
-    
     .card input:focus, .card textarea:focus {
         outline: none;
         border-color: var(--primary-color);

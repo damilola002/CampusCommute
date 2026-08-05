@@ -183,7 +183,7 @@
             border-radius: 50px;
             z-index: 100;
             width: calc(100% - 48px);
-            max-width: 400px;
+            max-width: 460px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
@@ -239,10 +239,16 @@
 <body>
     
     <div class="header">
-        <h1>CampusCommute</h1>
+        <a href="/" onclick="location.reload(); return false;" style="text-decoration: none; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Inter', sans-serif; font-size: 1.25rem; font-weight: 700;" aria-label="Reload CampusCommute">CampusCommute</a>
         {% if user.is_authenticated %}
-            <div style="font-size: 0.875rem; color: var(--text-muted);">
-                <i class="fa-solid fa-user-circle"></i> {{ user.username|default:user.email }}
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="{% url 'notifications' %}" style="position: relative; color: var(--text-muted); font-size: 1.1rem; text-decoration: none;" title="Notifications" id="bell-link">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notif-badge" style="display: none; position: absolute; top: -6px; right: -8px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; line-height: 16px; text-align: center; padding: 0 3px;">0</span>
+                </a>
+                <span style="font-size: 0.875rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-user-circle"></i> {{ user.username|default:user.email }}
+                </span>
             </div>
         {% endif %}
     </div>
@@ -263,7 +269,7 @@
     {% if user.is_authenticated %}
     <div class="bottom-nav">
         <!-- Map/Create Ride Tab -->
-        <a href="{% url 'create_order' %}" class="nav-item {% if request.resolver_match.url_name == 'create_order' %}active{% endif %}">
+        <a href="{% url 'map_view' %}" class="nav-item {% if request.resolver_match.url_name == 'map_view' %}active{% endif %}">
             <i class="fa-solid fa-map-location-dot"></i>
             <span>Map</span>
         </a>
@@ -271,13 +277,28 @@
         <!-- Requests Tab -->
         <a href="{% url 'community_board' %}" class="nav-item {% if request.resolver_match.url_name == 'community_board' %}active{% endif %}">
             <i class="fa-solid fa-list"></i>
-            <span>Requests</span>
+            <span>Rides</span>
+        </a>
+
+        <!-- Trips Tab -->
+        <a href="{% url 'my_trips' %}" class="nav-item {% if request.resolver_match.url_name == 'my_trips' %}active{% endif %}">
+            <i class="fa-solid fa-route"></i>
+            <span>Trips</span>
         </a>
 
         <!-- Community Forum Tab -->
         <a href="{% url 'discussions' %}" class="nav-item {% if request.resolver_match.url_name == 'discussions' %}active{% endif %}">
             <i class="fa-solid fa-comments"></i>
             <span>Forum</span>
+        </a>
+
+        <!-- Notifications Tab -->
+        <a href="{% url 'notifications' %}" class="nav-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="nav-notif-link">
+            <span style="position: relative;">
+                <i class="fa-solid fa-bell"></i>
+                <span id="nav-badge" style="display: none; position: absolute; top: -4px; right: -8px; background: #ef4444; color: white; font-size: 0.55rem; font-weight: 700; border-radius: 999px; min-width: 14px; height: 14px; line-height: 14px; text-align: center; padding: 0 2px;">0</span>
+            </span>
+            <span>Alerts</span>
         </a>
 
         <!-- Profile Tab -->
@@ -287,6 +308,33 @@
         </a>
     </div>
     {% endif %}
+
+{% if user.is_authenticated %}
+<script>
+(function pollNotifications() {
+    var badge = document.getElementById('notif-badge');
+    var navBadge = document.getElementById('nav-badge');
+    function fetchCount() {
+        fetch('/order/notifications/count/', { headers: {'X-Requested-With': 'XMLHttpRequest'} })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            var n = data.count || 0;
+            if (badge) {
+                badge.textContent = n > 99 ? '99+' : n;
+                badge.style.display = n > 0 ? 'inline-block' : 'none';
+            }
+            if (navBadge) {
+                navBadge.textContent = n > 99 ? '99+' : n;
+                navBadge.style.display = n > 0 ? 'inline-block' : 'none';
+            }
+        })
+        .catch(function(){});
+    }
+    fetchCount();
+    setInterval(fetchCount, 30000);
+})();
+</script>
+{% endif %}
 
 </body>
 </html>

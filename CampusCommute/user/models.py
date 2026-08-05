@@ -38,6 +38,12 @@ class CustomerUser(AbstractUser):
     average_rating = models.FloatField(default=0.0)
     total_passengers = models.PositiveIntegerField(default=0)
 
+    def is_driver(self):
+        return self.role == self.DRIVER
+
+    def is_rider(self):
+        return self.role == self.RIDER
+
     def __str__(self):
         return f"{self.full_name} ({self.role})"
 

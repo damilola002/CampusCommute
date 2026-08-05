@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    .map-header {
+        margin-bottom: 1.5rem;
+    }
+
+    #live-map {
+        height: 480px;
+        width: 100%;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .map-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    /* Style popup */
+    .leaflet-popup-content-wrapper {
+        background: var(--surface-color) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .leaflet-popup-tip {
+        background: var(--surface-color) !important;
+        border: 1px solid var(--border-color);
+    }
+
+    .popup-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.25rem;
+    }
+
+    .popup-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary-color);
+    }
+
+    .popup-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--surface-hover);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        border: 2px solid var(--border-color);
+    }
+
+    .popup-details h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .popup-details p {
+        margin: 2px 0 0 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-header">
+    <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700;">Live Rides Map</h2>
+    <p style="color: var(--text-muted); margin-top: 0.25rem; font-size: 0.875rem;">View your position and matched users sharing your commute.</p>
+</div>
+
+<!-- Map Container -->
+<div id="live-map"></div>
+
+<!-- Action buttons below map -->
+<div class="map-actions">
+    <a href="{% url 'create_order' %}" class="btn btn-outline" style="border-radius: 50px;">
+        <i class="fa-solid fa-plus"></i> Request a Ride
+    </a>
+    {% if user.role == 'driver' %}
+    <a href="{% url 'offer_ride' %}" class="btn" style="border-radius: 50px;">
+        <i class="fa-solid fa-car"></i> Offer a Ride
+    </a>
+    {% endif %}
+</div>
+
+<!-- CSRF Token for coordinates posting -->
+<form style="display:none;">{% csrf_token %}</form>
+
+<script>
+    let map;
+    let markers = {};
+    let selfMarker;
+    let selfCircle;
+    let userHasCentered = false;
+
+    // Retrieve CSRF token
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Map centered on a default campus location (e.g., UT Arlington / general default)
+        map = L.map('live-map').setView([32.7299, -97.1147], 14);
+
+        // Tile layer (standard dark-mode tile layer or OpenStreetMap tiles)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Track live location using watchPosition
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(updateMyLocation, handleGeoError, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        }
+
+        // Poll matched locations every 5 seconds
+        fetchMatchedLocations();
+        setInterval(fetchMatchedLocations, 5000);
+    });
+
+    // Handle updates to user's live position
+    function updateMyLocation(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+
+        // 1. Send live position to database
+        if (csrf) {
+            const formData = new FormData();
+            formData.append('lat', lat);
+            formData.append('lng', lng);
+            fetch("{% url 'update_driver_location' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf },
+                body: formData
+            }).catch(err => console.error("Failed to upload position", err));
+        }
+
+        // 2. Render marker for self on the map
+        const selfLatLng = [lat, lng];
+        if (!selfMarker) {
+            // Pulse circle
+            selfCircle = L.circle(selfLatLng, {
+                radius: Math.min(accuracy, 100),
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.15
+            }).addTo(map);
+
+            selfMarker = L.circleMarker(selfLatLng, {
+                radius: 8,
+                color: '#ffffff',
+                fillColor: '#3b82f6',
+                fillOpacity: 1,
+                weight: 2
+            }).addTo(map).bindPopup("<b>You</b> (Your current position)");
+        } else {
+            selfMarker.setLatLng(selfLatLng);
+            selfCircle.setLatLng(selfLatLng).setRadius(Math.min(accuracy, 100));
+        }
+
+        // Auto-center map on user's location on first load
+        if (!userHasCentered) {
+            map.setView(selfLatLng, 15);
+            userHasCentered = true;
+        }
+    }
+
+    function handleGeoError(err) {
+        console.warn("Geolocation watchPosition error: " + err.message);
+    }
+
+    // Fetch and display active matched users (passengers/driver)
+    async function fetchMatchedLocations() {
+        try {
+            const res = await fetch("{% url 'map_data' %}");
+            const data = await res.json();
+            if (data.locations) {
+                // Track currently returned keys to remove obsolete markers
+                const currentKeys = new Set();
+
+                data.locations.forEach(loc => {
+                    if (loc.is_self) return; // Self is handled by watchPosition
+
+                    const key = loc.id.toString();
+                    currentKeys.add(key);
+
+                    const latLng = [loc.lat, loc.lng];
+                    
+                    // Create popup content
+                    let avatarHtml = '';
+                    if (loc.profile_picture) {
+                        avatarHtml = `<img src="${loc.profile_picture}" class="popup-avatar" alt="${loc.name}">`;
+                    } else {
+                        avatarHtml = `
+                            <div class="popup-avatar-placeholder">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        `;
+                    }
+
+                    const popupContent = `
+                        <div class="popup-content">
+                            ${avatarHtml}
+                            <div class="popup-details">
+                                <h4>${loc.name}</h4>
+                                <p>${loc.role.toUpperCase()}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    if (!markers[key]) {
+                        // Create marker
+                        const color = (loc.role === 'driver') ? '#10b981' : '#ef4444'; // green for driver, red for rider
+                        const marker = L.circleMarker(latLng, {
+                            radius: 10,
+                            color: '#ffffff',
+                            fillColor: color,
+                            fillOpacity: 0.9,
+                            weight: 2
+                        }).addTo(map).bindPopup(popupContent);
+
+                        markers[key] = marker;
+                    } else {
+                        // Update position and popup
+                        markers[key].setLatLng(latLng);
+                        markers[key].setPopupContent(popupContent);
+                    }
+                });
+
+                // Remove obsolete markers (rides cancelled or matches ended)
+                Object.keys(markers).forEach(key => {
+                    if (!currentKeys.has(key)) {
+                        map.removeLayer(markers[key]);
+                        delete markers[key];
+                    }
+                });
+            }
+        } catch(err) {
+            console.error("Failed to load map data", err);
+        }
+    }
+</script>
+{% endblock %}

@@ -9,26 +9,27 @@
 
 <!-- New Post Form -->
 <div class="card" style="margin-bottom: 2rem;">
-    <form method="POST" action="{% url 'discussions' %}">
+    <form id="new-post-form">
         {% csrf_token %}
         <div class="input-group" style="margin-bottom: 0.5rem;">
-            <textarea name="content" class="input-control" rows="3" placeholder="What's on your mind?" required></textarea>
+            <textarea id="post-content" name="content" class="input-control" rows="3" placeholder="What's on your mind?" required></textarea>
         </div>
-        <div style="text-align: right;">
-            <button type="submit" name="new_post" class="btn" style="width: auto; padding: 0.5rem 1.5rem; border-radius: 50px;">Post</button>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span id="post-status" style="font-size: 0.8rem; color: var(--success-color); display: none;">&#10003; Posted!</span>
+            <button type="submit" name="new_post" class="btn" style="width: auto; padding: 0.5rem 1.5rem; border-radius: 50px; margin-left: auto;">Post</button>
         </div>
     </form>
 </div>
 
 <!-- Posts Feed -->
-<div class="feed">
+<div class="feed" id="posts-feed">
     {% for post in posts %}
-    <div class="card" style="margin-bottom: 1rem;">
+    <div class="card post-card" id="post-{{ post.id }}" style="margin-bottom: 1rem;">
         <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem;">
             {% if post.author.profile_picture %}
-                <img src="{{ post.author.profile_picture.url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                <img src="{{ post.author.profile_picture.url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
             {% else %}
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); flex-shrink: 0;">
                     <i class="fa-solid fa-user" style="font-size: 1rem; color: var(--text-muted);"></i>
                 </div>
             {% endif %}
@@ -37,35 +38,107 @@
                 <div style="font-size: 0.75rem; color: var(--text-muted);">{{ post.created_at|timesince }} ago</div>
             </div>
         </div>
-        
-        <div style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">
-            {{ post.content|linebreaks }}
-        </div>
-
-        <!-- Comments Section -->
+        <div style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">{{ post.content|linebreaks }}</div>
         <div style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius-md); margin-top: 1rem;">
-            {% for comment in post.comments.all %}
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-                    <div style="font-size: 0.875rem; font-weight: 600; min-width: 60px;">{{ comment.author.full_name }}:</div>
-                    <div style="font-size: 0.875rem; color: var(--text-muted); flex: 1;">{{ comment.content }}</div>
-                </div>
-            {% empty %}
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">No comments yet.</div>
-            {% endfor %}
-            
-            <form method="POST" action="{% url 'discussions' %}" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <div class="comments-list" id="comments-{{ post.id }}">
+                {% for comment in post.comments.all %}
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div style="font-size: 0.875rem; font-weight: 600; min-width: 60px;">{{ comment.author.full_name }}:</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); flex: 1;">{{ comment.content }}</div>
+                    </div>
+                {% empty %}
+                    <div class="no-comments" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">No comments yet.</div>
+                {% endfor %}
+            </div>
+            <form class="comment-form" data-post-id="{{ post.id }}" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                 {% csrf_token %}
                 <input type="hidden" name="post_id" value="{{ post.id }}">
-                <input type="text" name="content" class="input-control" placeholder="Write a comment..." style="padding: 0.5rem 0.75rem; font-size: 0.875rem;" required>
-                <button type="submit" name="new_comment" class="btn" style="width: auto; padding: 0.5rem; border-radius: 50%;"><i class="fa-solid fa-paper-plane"></i></button>
+                <input type="text" name="content" class="input-control comment-input" placeholder="Write a comment..." style="padding: 0.5rem 0.75rem; font-size: 0.875rem;" required>
+                <button type="submit" name="new_comment" class="btn" style="width: auto; padding: 0.5rem; border-radius: 50%; flex-shrink: 0;"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
         </div>
     </div>
     {% empty %}
-    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <div id="empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
         <i class="fa-regular fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
         <p>No discussions yet. Be the first to post!</p>
     </div>
     {% endfor %}
 </div>
+
+<script>
+(function() {
+    var CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    var postUrl = "{% url 'discussions' %}";
+
+    document.getElementById('new-post-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var textarea = document.getElementById('post-content');
+        var content = textarea.value.trim();
+        if (!content) return;
+        var formData = new FormData();
+        formData.append('csrfmiddlewaretoken', CSRF);
+        formData.append('content', content);
+        formData.append('new_post', '1');
+        try {
+            var res = await fetch(postUrl, { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: formData });
+            var data = await res.json();
+            if (data.status === 'ok') {
+                var empty = document.getElementById('empty-state');
+                if (empty) empty.remove();
+                var feed = document.getElementById('posts-feed');
+                var card = buildPostCard(data);
+                feed.insertBefore(card, feed.firstChild);
+                attachCommentHandler(card.querySelector('.comment-form'));
+                textarea.value = '';
+                var st = document.getElementById('post-status');
+                st.style.display = 'inline';
+                setTimeout(function(){ st.style.display = 'none'; }, 2500);
+            }
+        } catch(err) { console.error('Post failed', err); }
+    });
+
+    document.querySelectorAll('.comment-form').forEach(attachCommentHandler);
+
+    function attachCommentHandler(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var postId = form.dataset.postId;
+            var input = form.querySelector('.comment-input');
+            var content = input.value.trim();
+            if (!content) return;
+            var formData = new FormData();
+            formData.append('csrfmiddlewaretoken', CSRF);
+            formData.append('post_id', postId);
+            formData.append('content', content);
+            formData.append('new_comment', '1');
+            try {
+                var res = await fetch(postUrl, { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: formData });
+                var data = await res.json();
+                if (data.status === 'ok') {
+                    var list = document.getElementById('comments-' + postId);
+                    var placeholder = list.querySelector('.no-comments');
+                    if (placeholder) placeholder.remove();
+                    var el = document.createElement('div');
+                    el.style.cssText = 'display:flex;gap:0.75rem;margin-bottom:0.75rem;border-bottom:1px solid var(--border-color);padding-bottom:0.75rem;';
+                    el.innerHTML = '<div style="font-size:0.875rem;font-weight:600;min-width:60px;">' + escHtml(data.author) + ':</div><div style="font-size:0.875rem;color:var(--text-muted);flex:1;">' + escHtml(data.content) + '</div>';
+                    list.appendChild(el);
+                    input.value = '';
+                }
+            } catch(err) { console.error('Comment failed', err); }
+        });
+    }
+
+    function escHtml(str) { var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    function buildPostCard(data) {
+        var card = document.createElement('div');
+        card.className = 'card post-card';
+        card.id = 'post-' + data.post_id;
+        card.style.marginBottom = '1rem';
+        card.innerHTML = '<div style="display:flex;gap:1rem;margin-bottom:0.75rem;"><div style="width:40px;height:40px;border-radius:50%;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color);flex-shrink:0;"><i class="fa-solid fa-user" style="font-size:1rem;color:var(--text-muted);"></i></div><div><div style="font-weight:600;font-size:0.875rem;">' + escHtml(data.author) + ' <span style="color:var(--primary-color);font-size:0.75rem;">\u2022 ' + escHtml(data.role) + '</span></div><div style="font-size:0.75rem;color:var(--text-muted);">just now</div></div></div><div style="font-size:0.95rem;line-height:1.5;margin-bottom:1rem;">' + escHtml(data.content) + '</div><div style="background:var(--bg-color);padding:1rem;border-radius:var(--radius-md);margin-top:1rem;"><div class="comments-list" id="comments-' + data.post_id + '"><div class="no-comments" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;">No comments yet.</div></div><form class="comment-form" data-post-id="' + data.post_id + '" style="display:flex;gap:0.5rem;margin-top:0.5rem;"><input type="hidden" name="post_id" value="' + data.post_id + '"><input type="text" name="content" class="input-control comment-input" placeholder="Write a comment..." style="padding:0.5rem 0.75rem;font-size:0.875rem;" required><button type="submit" name="new_comment" class="btn" style="width:auto;padding:0.5rem;border-radius:50%;flex-shrink:0;"><i class="fa-solid fa-paper-plane"></i></button></form></div>';
+        return card;
+    }
+})();
+</script>
 {% endblock %}
